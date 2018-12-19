@@ -109,16 +109,16 @@ The output of this function will be the activation A. Additionally, we save some
 #Be sure to also carefully review the function in general in order to continue building your understanding.
 def linear_activation_forward(A_prev, W, b, activation):
  
-    Z = np.dot(W, A_prev) + b #Your code here; see the linear transformation above for how to compute Z
+    Z = #Your code here; see the linear transformation above for how to compute Z
     linear_cache = (A_prev, W, b)
     activation_cache = Z
     
     #Here we define two possible activation functions
     if activation == "sigmoid":
-        A = 1/(1+np.exp(-Z)) #Your code here; use the appropriate function for a sigmoid activation function
+        A = #Your code here; use the appropriate function for a sigmoid activation function
     
     elif activation == "relu":
-        A = np.maximum(0,Z) #Your code here; use the appropriate function for the ReLU activation function.
+        A = #Your code here; use the appropriate function for the ReLU activation function.
     
     assert (A.shape == (W.shape[0], A_prev.shape[1]))
     cache = (linear_cache, activation_cache)
@@ -142,21 +142,15 @@ Make sure to keep track of the caches in the "caches" list. To add a new value `
 #Once again, complete this templated function as indicated by the comments provided.
 def L_model_forward(X, parameters):
     #Initialize a cache list to keep track of the caches
-    caches = [] #Your code here
+    #Your code here
     A = X
     L = len(parameters) // 2 # number of layers in the neural network
     
     # Implement the RELU activation L-1 times. Add "cache" to the "caches" list.
     #Your code here
-    for l in range(1, L):
-        A_prev = A
-        A, cache = linear_activation_forward(A_prev, parameters['W'+ str(l)], parameters['b' + str(l)], activation = "relu")        
-        caches.append(cache)
     
     # Implement the sigmoid function for the last layer. Add "cache" to the "caches" list.
     #Your code here
-    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], activation = "sigmoid")
-    caches.append(cache)
     
     assert(AL.shape == (1,X.shape[1]))
             
@@ -181,8 +175,8 @@ def compute_cost(AL, Y):
         
     m = Y.shape[1]
 
-    cost = -(1/m)* np.sum((Y*np.log(AL))+ (1-Y)*np.log(1-AL)) #Your code here; use the formula above to calculate the cost.
-    cost = np.squeeze(cost)      # To make sure to get shape right (e.g. turn [[17]] into 17)
+    cost = #Your code here; use the formula above to calculate the cost.
+    cost = np.squeeze(cost)      #No edit needed; used to make sure to get shape right (e.g. turn [[17]] into 17)
     
     return cost
 ```
@@ -228,9 +222,9 @@ def linear_backward(dZ, cache):
     A_prev, W, b = cache #Unpacking our complex object
     m = A_prev.shape[1]
 
-    dW = (1/m) * np.dot(dZ,A_prev.T) #Your code here; see the formulas above
-    db = (1/m) * np.sum(dZ, axis =1, keepdims = True) #Your code here; see the formulas above
-    dA_prev = np.dot(W.T , dZ) #Your code here; see the formulas above
+    dW = #Your code here; see the formulas above
+    db = #Your code here; see the formulas above
+    dA_prev = #Your code here; see the formulas above
     
     return dA_prev, dW, db
 ```
@@ -266,13 +260,13 @@ def linear_activation_backward(dA, cache, activation):
     Z= activation_cache
     
     if activation == "sigmoid": 
-        s = 1/(1+np.exp(-Z))  #Your code here; see the formula above
-        dZ = dA * s * (1-s) #Your code here; see the formula above
+        s = #Your code here; see the formula above
+        dZ = #Your code here; see the formula above
         dA_prev, dW, db = linear_backward(dZ, linear_cache)
         
     elif activation == "relu":
         dZ = np.array(dA, copy=True) # just converting dz to a correct object.
-        dZ[Z <= 0] = 0 #Your code here; see the formula above
+        #Your code here; see the formula above to update your initialized dZ
         dA_prev, dW, db = linear_backward(dZ, linear_cache)
     
     return dA_prev, dW, db
@@ -302,6 +296,7 @@ For example, for $l=3$ this would store $dW^{[l]}$ in `grads["dW3"]`.
 
 
 ```python
+#Complete the skeleton function below (there are 3 lines that need to be completed)
 def L_model_backward(AL, Y, caches):
     grads = {}
     L = len(caches) # the number of layers
@@ -309,18 +304,18 @@ def L_model_backward(AL, Y, caches):
     Y = Y.reshape(AL.shape) # after this line, Y is the same shape as AL
     
     # Initializing the backpropagation
-    dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL)) #Your code here; see the code snippet above
+    dAL = #Your code here; see the code snippet above
     
     # Lth layer (SIGMOID -> LINEAR) gradients. Inputs: "dAL, current_cache". Outputs: "grads["dAL-1"], grads["dWL"], grads["dbL"]
     current_cache = caches[L-1]
-    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(dAL, current_cache, activation = "sigmoid") #Your code here; use the helper function defined above
+    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = #Your code here; use the helper function defined above
     
     # Loop from l=L-2 to l=0
     for l in reversed(range(L-1)):
         # (RELU -> LINEAR) gradients
         # Inputs: "grads["dA" + str(l + 1)], current_cache". Outputs: "grads["dA" + str(l)] , grads["dW" + str(l + 1)] , grads["db" + str(l + 1)] 
         current_cache = caches[l]
-        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(l+1)], current_cache, activation = "relu") #Your code here; use the helper function defined above
+        dA_prev_temp, dW_temp, db_temp = #Your code here; use the helper function defined above
         grads["dA" + str(l)] = dA_prev_temp
         grads["dW" + str(l + 1)] = dW_temp
         grads["db" + str(l + 1)] = db_temp
@@ -349,10 +344,7 @@ def update_parameters(parameters, grads, learning_rate):
     
     L = len(parameters) // 2 # number of layers in the neural network
     
-    
-    for l in range(L):
-        parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
-        parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["db" + str(l+1)]
+    #Your code here
     return parameters
 ```
 
@@ -403,18 +395,6 @@ np.random.seed(1)
 
 
 ```python
-ImageDataGenerator(img)
-```
-
-
-
-
-    <keras.preprocessing.image.ImageDataGenerator at 0x109a87390>
-
-
-
-
-```python
 # directory path
 train_data_dir = 'data/train'
 test_data_dir = 'data/validation'
@@ -433,10 +413,6 @@ train_generator = ImageDataGenerator().flow_from_directory(
 train_images, train_labels = next(train_generator)
 test_images, test_labels = next(test_generator)
 ```
-
-    Found 132 images belonging to 2 classes.
-    Found 790 images belonging to 2 classes.
-
 
 Note the drastic difference of one of these images as compared to the raw file:
 
@@ -460,7 +436,7 @@ plt.imshow(train_images[0])
 
 
 
-![png](index_files/index_35_3.png)
+![png](index_files/index_34_3.png)
 
 
 ## Data Exploration and Normalization
@@ -483,15 +459,6 @@ print ("test_images_orig shape: " + str(test_images.shape))
 print ("test_labels shape: " + str(test_labels.shape))
 ```
 
-    Number of training examples: 790
-    Number of testing examples: 132
-    Each image is of size: (64, 64, 3)
-    train_images shape: (790, 64, 64, 3)
-    train_labels shape: (790, 2)
-    test_images_orig shape: (132, 64, 64, 3)
-    test_labels shape: (132, 2)
-
-
 
 ```python
 # Reshape the training and test examples 
@@ -507,10 +474,6 @@ print ("test_img's shape: " + str(test_img.shape))
 
 ```
 
-    train_img's shape: (12288, 790)
-    test_img's shape: (12288, 132)
-
-
 Output needs to be of shape $(1, X_n)$
 
 
@@ -522,10 +485,6 @@ test_labels_final = test_labels.T[[1]]
 print ("train_labels_final's shape: " + str(train_labels_final.shape))
 print ("test_labels_final's shape: " + str(test_labels_final.shape))
 ```
-
-    train_labels_final's shape: (1, 790)
-    test_labels_final's shape: (1, 132)
-
 
 
 ```python
@@ -540,22 +499,22 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.005, num_iterations = 300
     costs = []                         
     
     # Parameters initialization. (≈ 1 line of code)
-    parameters = initialize_parameters_deep(layers_dims)
+    parameters = #Your code here; use the previous helper functions
     
     # Loop (gradient descent)
     for i in range(0, num_iterations):
 
         # Forward propagation: [LINEAR -> RELU]*(L-1) -> LINEAR -> SIGMOID.
-        AL, caches = L_model_forward(X, parameters) #Your code here; use the previous helper functions
+        AL, caches = #Your code here; use the previous helper functions
         
         # Compute cost.
-        cost = compute_cost(AL, Y) #Your code here; use the previous helper functions
+        cost = #Your code here; use the previous helper functions
     
         # Backward propagation.
-        grads = L_model_backward(AL, Y, caches) #Your code here; use the previous helper functions
+        grads = #Your code here; use the previous helper functions
  
         # Update parameters.
-        parameters = update_parameters(parameters, grads, learning_rate)  #Your code here; use the previous helper functions
+        parameters = #Your code here; use the previous helper functions
                 
         # Print the cost every 100 training example
         if print_cost and i % 100 == 0:
@@ -575,24 +534,8 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.005, num_iterations = 300
 
 
 ```python
-parameters = L_layer_model(train_img, train_labels_final, layers_dims, num_iterations = 1000, print_cost = True) #Your code here; use the helper function defined above
+parameters = #Your code here; use the helper function defined above
 ```
-
-    Cost after iteration 0: 0.704264
-    Cost after iteration 100: 0.662815
-    Cost after iteration 200: 0.581147
-    Cost after iteration 300: 0.510887
-    Cost after iteration 400: 0.464477
-    Cost after iteration 500: 0.493332
-    Cost after iteration 600: 0.516785
-    Cost after iteration 700: 0.511179
-    Cost after iteration 800: 0.250691
-    Cost after iteration 900: 0.233587
-
-
-
-![png](index_files/index_43_1.png)
-
 
 
 ```python
@@ -620,11 +563,8 @@ def predict(X, y, parameters):
 
 
 ```python
-pred_train = predict(train_img, train_labels_final, parameters) #Your code here; use the helper function defined above
+pred_train = #Your code here; use the helper function defined above
 ```
-
-    Accuracy: 0.9556962025316456
-
 
 
 ```python
@@ -702,7 +642,7 @@ print_mislabeled_images(list(train_generator.class_indices), test_img, test_labe
 
 
 
-![png](index_files/index_49_1.png)
+![png](index_files/index_48_1.png)
 
 
 
