@@ -1,5 +1,5 @@
 
-# Deep Networks - Lab: Building an Image Classifier
+# Deep Networks: Building an Image Classifier - Lab
 
 ## Introduction
 
@@ -10,11 +10,11 @@ In this lab, we'll create a network with more than one hidden layer from scratch
      - First, you'll combine a linear step and a activation function in a linear forward function.
      - Next, you'll stack the linear forward function L-1 time with a RELU activation function (for layers 1 through L-1) and then add a sigmoid layer at the end (for the final layer $L$). 
 - You'll create the loss function.
-- You'll mplement the backward propagation module using three helper functions:
-    - First, you'll create a function for linear part of a layer's backward propagation step.
+- You'll implement the backward propagation module using three helper functions:
+    - First, you'll create a function for the linear part of a layer's backward propagation step.
     - Next, we'll tell you how to get the gradients for the activation functions (RELU and sigmoid) and you'll implement this along with the linear part of the activation step to create a backward function.
     - Lastly, you'll stack the backward function L-1 times with the RELU activation and add the sigmoid activation in the $L$th layer in a new L_model_backward function
-- You'll conclude your model with updating the parameters
+- You'll conclude your model by updating the parameters
 - At the end of this lab, you'll combine all the helper functions in a function called `L_layer_model` and apply this model to the Santa data set you've used before!
 
 ## Objectives
@@ -25,7 +25,7 @@ You will be able to:
 * Batch load and process directories of images using Keras
 * Code a multi-layer neural network from scratch
 
-## 1. Packages
+## Packages
 
 First, let's import all the packages that you 'll need for this lab.
 
@@ -46,7 +46,7 @@ plt.rcParams['image.cmap'] = 'gray'
 np.random.seed(123)
 ```
 
-## 2. Initialization in an L-layer Neural Network
+## Initialization in an L-layer Neural Network
 
 Let's look at the initialization function you created in the previous lab. We'll try to convert this helper function to a function that can be used in a setting with $L$ layers.
 
@@ -91,9 +91,9 @@ def initialize_parameters_deep(n_layer):
     return parameters
 ```
 
-## 3. Forward propagation
+## Forward propagation
 
-### 3.1. Linear forward and activation for 1 layer
+### Linear forward and activation for 1 layer
 Let's start building on a propagation module. As you know, in each layer of nodes $l$, two things happen
 
 - A linear transformation $Z^{[l]} = W^{[l]}A^{[l-1]} +b^{[l]}$, where $A^{[0]} = X$. You may also find `np.dot()` useful here.
@@ -101,7 +101,9 @@ Let's start building on a propagation module. As you know, in each layer of node
     - *Sigmoid*: $A^{[l]} = \sigma(Z^{[l]}) = \frac{1}{ 1 + e^{-(Z^{[l]})}}$. You can          program this in python using `np.exp()`.
     - *ReLU*: The mathematical formula for ReLu is $A^{[l]} $= RELU$(Z^{[l]})$ =$ \max(0, Z^{[l]})$. You can  program this in python using `np.maximum()`.
 
-The output of this function will be the activation A. Additionally, we save some intermediate values for our backpropagation later on. Define `1inear_cache` saves the elements of the linear transformation `(A_prev, W, b)`, `activation_cache` save `Z`. They are stored together in one dictionary, `cache`.
+Below, we'll define such a function. 
+
+The output of this function will be the activation A. Additionally, we save some intermediate values for our backpropagation later on. We'll define `1inear_cache` to save the elements of the linear transformation `(A_prev, W, b)`, and `activation_cache` to save `Z`. We'll store these together in one dictionary, `cache`.
 
 
 ```python
@@ -126,9 +128,9 @@ def linear_activation_forward(A_prev, W, b, activation):
     return A, cache
 ```
 
-### 3.2 Extending to  L layers
+### Extending to  L layers
 
-In this lab, we'll build a neural network with $L-1$ RELU layers and the last layer L with a SIGMOID activation function. Let's build a function that implements this using `linear_activation_forward()`.
+From here, we'll build a neural network with $L-1$ RELU layers and the last layer L with a SIGMOID activation function. Let's build a function that implements this using `linear_activation_forward()`.
 
 The second argument of the function `L_model_forward` is `parameters`. Recall that this is a dictionary storing (initialized) parameters `W` and `b` for each layer of the network. We'll loop over all the values of W and b, and they are inputs of the function `linear_activation_forward`. Recall that you can use something like this to loop over `W1`, `W2`, etc.: `parameters['W'+ str(i)]` with `i` the index value.
 
@@ -159,7 +161,7 @@ def L_model_forward(X, parameters):
 
 Great! Now you have a full forward propagation that takes the input X and outputs a row vector $A^{[L]}$ containing your predictions. It also records all intermediate values in "caches". 
 
-## 4. The cost function
+## The cost function
 
 Just like in the last lab, the activation in the last layer provides us with the preditions on all the samples. The activations were denoted as $a^{[2] (i)}$ in the last lab (where we had one hidden layer), here they are 
 $a^{[L] (i)}$, or our vectorized $A^{[L]}$ output from `L_model_forward`. The resulting cross-entropy cost is essentially the same:
@@ -181,7 +183,7 @@ def compute_cost(AL, Y):
     return cost
 ```
 
-## 5. Backward propagation
+## Backward propagation
 
 Just like with forward propagation, you will implement helper functions for backpropagation. Remember that back propagation is used to calculate the gradient of the loss function with respect to the parameters. 
 
@@ -198,9 +200,8 @@ You are going to build the backward propagation in three steps:
 - Then let's build a libear --> activation backward function where the activation computes the derivative of either the ReLU or sigmoid activation
 - lastly, let's backpropagate through the entire model
 
-### 5.1 Linear backward
+## Linear backward
 
-***CHANGE THIS*** TRY TO DO LINEAR AND NON-LINEAR IN 1 FUNCTION
 
 For layer $l$, the linear part is: $Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$ (followed by an activation).
 
@@ -229,7 +230,7 @@ def linear_backward(dZ, cache):
     return dA_prev, dW, db
 ```
 
-### 5.2  Linear and activation backward
+##   Linear and activation backward
 
 
 Next, you will create a function that merges the two helper functions: **`linear_backward`** and the backward step for the activation **`linear_activation_backward`**. 
@@ -272,9 +273,7 @@ def linear_activation_backward(dA, cache, activation):
     return dA_prev, dW, db
 ```
 
-### 5.3 - L-Model Backward 
-
-***CHANGE THIS***
+## L-Model Backward 
 
 Now you will implement the backward function for the whole network. Recall that when you implemented the `L_model_forward` function, at each iteration, you stored a cache which contains (X,W,b, and z). In the back propagation module, you will use those variables to compute the gradients. Therefore, in the `L_model_backward` function, you will iterate through all the hidden layers backward, starting from layer $L$. On each step, you will use the cached values for layer $l$ to backpropagate through layer $l$. Figure 5 below shows the backward pass. 
 
@@ -323,7 +322,7 @@ def L_model_backward(AL, Y, caches):
     return grads
 ```
 
-## 6  Parameter updates
+## Parameter updates
 
 In this section you will update the parameters of the model, using gradient descent: 
 
@@ -348,7 +347,7 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 ```
 
-## 7.  The data 
+##  The data 
 
 First, let's take a look at how to load a raw image from file and display it:
 
@@ -371,9 +370,7 @@ plt.show()
 
 Great!  
 
-Now let's take a look at how we can 
-
-Examine the gist of this code, but don't worry if you don't understand all the ins and out of the keras preprocessing method `ImageDataGenerator`. We'll explain in more detail when working with convolutional neural networks. The import piece to note here is the drastic image downgrade that we're doing here. The raw images would contain far more information but this would also be costly in time and hardware resources.
+Now let's take a look at how we can examine the gist of this code, but don't worry if you don't understand all the ins and out of the keras preprocessing method `ImageDataGenerator`. We'll explain in more detail when working with convolutional neural networks. The import piece to note here is the drastic image downgrade that we're doing here. The raw images would contain far more information but this would also be costly in time and hardware resources.
 
 
 ```python
@@ -415,6 +412,8 @@ test_images, test_labels = next(test_generator)
 ```
 
 Note the drastic difference of one of these images as compared to the raw file:
+
+(Yes; it is just an incoherent blob of dots after our tremendous compression.)
 
 
 ```python
@@ -568,13 +567,10 @@ pred_train = #Your code here; use the helper function defined above
 
 
 ```python
-pred_test = predict(test_img, test_labels_final, parameters) #Your code here; use the helper function defined above
+pred_test = #Your code here; use the helper function defined above
 ```
 
-    Accuracy: 0.7045454545454546
-
-
-## 7. Print mislabeled images
+## Print mislabeled images
 
 Finally, here we demonstrate iterating through our images and printing those that are mislabbeled. Be sure to make note of the code used for displaying these images, similar to what we saw above.
 
