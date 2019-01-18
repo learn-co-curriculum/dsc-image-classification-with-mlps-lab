@@ -46,10 +46,6 @@ plt.rcParams['image.cmap'] = 'gray'
 np.random.seed(123)
 ```
 
-    /Users/matthew.mitchell/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
-      from ._conv import register_converters as _register_converters
-
-
 ## Initialization in an L-layer Neural Network
 
 Let's look at the initialization function you created in the previous lab. We'll try to convert this helper function to a function that can be used in a setting with $L$ layers.
@@ -98,7 +94,7 @@ $$b^{[l]}: (n^{[l]}, 1)$$
 
 ```python
 #Your code here; 
-#rceate a dictionary of parameters for W and b given a list of layer dimensions.
+#create a dictionary of parameters for W and b given a list of layer dimensions.
 #Simply randomly initialize values in accordance to the shape each parameter should have.
 #Use random seed 123 (as provided)
 def initialize_parameters_deep(list_layer_dimensions):
@@ -107,40 +103,9 @@ def initialize_parameters_deep(list_layer_dimensions):
     parameters = {}
     
     #Your code here
-    L = len(list_layer_dimensions)           
-
-    for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(list_layer_dimensions[l], list_layer_dimensions[l-1])*0.05
-        parameters['b' + str(l)] = np.zeros((list_layer_dimensions[l], 1))
         
     return parameters
-
-initialize_parameters_deep([5,4,3,2])
 ```
-
-
-
-
-    {'W1': array([[-0.05428153,  0.04986727,  0.01414892, -0.07531474, -0.02893001],
-            [ 0.08257183, -0.12133396, -0.02144563,  0.06329681, -0.04333702],
-            [-0.03394431, -0.00473545,  0.07456948, -0.0319451 , -0.0221991 ],
-            [-0.02171756,  0.1102965 ,  0.1093393 ,  0.05020269,  0.01930932]]),
-     'b1': array([[0.],
-            [0.],
-            [0.],
-            [0.]]),
-     'W2': array([[ 0.03686843,  0.0745366 , -0.04679169,  0.05879145],
-            [-0.06269403, -0.03188758,  0.04535526, -0.07143404],
-            [-0.00700344, -0.04308774, -0.01278097, -0.13992946]]),
-     'b2': array([[0.],
-            [0.],
-            [0.]]),
-     'W3': array([[-0.08857666, -0.03499386,  0.04637312],
-            [-0.00868178,  0.0001423 ,  0.03441114]]),
-     'b3': array([[0.],
-            [0.]])}
-
-
 
 ## Forward propagation
 
@@ -549,8 +514,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.005, num_iterations = 300
     # Parameters initialization. (≈ 1 line of code)
     parameters = #Your code here; use the previous helper functions
     
-    # Loop (gradient descent)
-    for i in range(0, num_iterations):
+    # Create a Loop (for gradient descent)
 
         # Forward propagation: [LINEAR -> RELU]*(L-1) -> LINEAR -> SIGMOID.
         AL, caches = #Your code here; use the previous helper functions
@@ -612,7 +576,7 @@ def predict(X, parameters, y=None):
             probs[0,i] = 0
     
     #print ("predictions: " + str(probs)); print ("true labels: " + str(y))
-    if y:
+    if type(y) != type(None):
         print("Accuracy: "  + str(np.sum((probs == y)/m)))
         
     return probs
