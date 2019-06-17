@@ -7,7 +7,7 @@ In this lab, we'll create a network with more than one hidden layer from scratch
 
 - You'll start with initializing the parameters in all the layers.
 - You'll implement the forward propagation module:
-     - First, you'll combine a linear step and a activation function in a linear forward function.
+     - First, you'll combine a linear step and an activation function in a linear forward function.
      - Next, you'll stack the linear forward function L-1 time with a RELU activation function (for layers 1 through L-1) and then add a sigmoid layer at the end (for the final layer $L$). 
 - You'll create the loss function.
 - You'll implement the backward propagation module using three helper functions:
@@ -179,7 +179,7 @@ Great! Now you have a full forward propagation that takes the input X and output
 
 ## The cost function
 
-Just like in the last lab, the activation in the last layer provides us with the preditions on all the samples. The activations were denoted as $a^{[2] (i)}$ in the last lab (where we had one hidden layer), here they are 
+Just like in the last lab, the activation in the last layer provides us with the predictions on all the samples. The activations were denoted as $a^{[2] (i)}$ in the last lab (where we had one hidden layer), here they are 
 $a^{[L] (i)}$, or our vectorized $A^{[L]}$ output from `L_model_forward`. The resulting cross-entropy cost, J, is essentially the same:
 
 $$J = -\frac{1}{m} \sum\limits_{i = 1}^{m} (y^{(i)}\log\left(a^{[L] (i)}\right) + (1-y^{(i)})\log\left(1- a^{[L](i)}\right)) $$
@@ -252,7 +252,7 @@ def linear_backward(dZ, cache):
 Now, we'll merge `linear_backward` with our activation backward to have a complete `linear_activation_backward` function. Essentially, we are now computing `dZ` which we were discussing above.
 
 That is, $ dZ^{[l]}= dA ^{[l]} * g^{[l]'} (Z^{[l]})$. 
-To calculate the derivates we have two different scenarios, depending on the activation function of choice:
+To calculate the derivatives we have two different scenarios, depending on the activation function of choice:
 
 - If we are using the **sigmoid activation**:
 
@@ -267,7 +267,7 @@ giving us
 $g^{[l]'} (Z^{[l]}) = s \bullet (1-s)$
 
 
-- If we are using the **relu activation**, we simply inspect the previous activation cache. Recall that the relu is a binary decision; all values less then zero from our activation cache will be set to zero.
+- If we are using the **relu activation**, we simply inspect the previous activation cache. Recall that the relu is a binary decision; all values less than zero from our activation cache will be set to zero.
 
 Below, complete the skeleton function.
 
@@ -303,9 +303,9 @@ We've seen that to backpropagate, we look to compute the gradient of the activat
 dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL)) # derivative of cost wrt AL
 ```
 
-You can then feed this into our `linear_activation_backward` function that we defined above to successively update the gradients stored in our cache. Remember that our last layer of the network will be the first to be updated and uses the sigmoid activation function (appropriate for our classifcation purposes). All of the previous layers, will use the relu activation function. 
+You can then feed this into our `linear_activation_backward` function that we defined above to successively update the gradients stored in our cache. Remember that our last layer of the network will be the first to be updated and uses the sigmoid activation function (appropriate for our classification purposes). All of the previous layers, will use the relu activation function. 
 
-With that, complete the skeleton function `L_model_backward` below in order to succesively calculate the gradients for each layer and return these as a dictionary.
+With that, complete the skeleton function `L_model_backward` below in order to successively calculate the gradients for each layer and return these as a dictionary.
 
 
 ```python
@@ -343,7 +343,7 @@ Now that we have calculated all of the gradients, you need to write a function t
 $$ W^{[l]} = W^{[l]} - \alpha \text{ } dW^{[l]} $$
 $$ b^{[l]} = b^{[l]} - \alpha \text{ } db^{[l]} $$
 
-Whe completing the skeleton function below, after computing the updated parameters, store them in the parameters dictionary. 
+When completing the skeleton function below, after computing the updated parameters, store them in the parameters dictionary. 
 
 
 ```python
@@ -370,10 +370,10 @@ plt.show()
 ```
 
     (720, 687, 4)
+    
 
 
-
-![png](index_files/index_27_1.png)
+![png](output_27_1.png)
 
 
 Great!  
@@ -430,10 +430,10 @@ plt.imshow(train_images[0])
 ```
 
     Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-
+    
 
     (64, 64, 3)
-
+    
 
 
 
@@ -443,7 +443,7 @@ plt.imshow(train_images[0])
 
 
 
-![png](index_files/index_32_3.png)
+![png](output_32_3.png)
 
 
 ## Data Exploration and Normalization
@@ -502,7 +502,7 @@ layers_dims = [12288, 20, 7, 5, 1] #  4-layer model
 
 ## Putting It All Together
 
-Now, let's finalize all of our work and put everything together to construct our deep network model. Below, initialize parameters for the model and use our helper functions defined above to perform gradient descent to optimize these weights with respect to our loss function. Afterwards, the included code will then plot the cost funciton over the number of training cycles run.
+Now, let's finalize all of our work and put everything together to construct our deep network model. Below, initialize parameters for the model and use our helper functions defined above to perform gradient descent to optimize these weights with respect to our loss function. Afterwards, the included code will then plot the cost function over the number of training cycles run.
 
 
 ```python
@@ -594,7 +594,7 @@ pred_test = #Your code here; use the helper function defined above
 
 ## Print mislabeled images
 
-Finally, here we demonstrate iterating through our images and printing those that are mislabbeled. Be sure to make note of the code used for displaying these images, similar to what we saw above.
+Finally, here we demonstrate iterating through our images and printing those that are mislabeled. Be sure to make note of the code used for displaying these images, similar to what we saw above.
 
 
 ```python
@@ -657,10 +657,10 @@ print_mislabeled_images(list(train_generator.class_indices), test_img, test_labe
     Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
     Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
     Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+    
 
 
-
-![png](index_files/index_50_1.png)
+![png](output_50_1.png)
 
 
 
@@ -671,5 +671,5 @@ classes = train_generator.class_indices
 
 ## Summary
 
-In this lab, you once again practiced and reviewed the process of building a nueral network. This time, we built a more complex network with additional layers which drastically improves the performance on our data set with Santa images! We also made note of some important methods for importing and displaying images, a necessary preliminary step in building image recognition systems.
+In this lab, you once again practiced and reviewed the process of building a neural network. This time, we built a more complex network with additional layers which drastically improves the performance on our data set with Santa images! We also made note of some important methods for importing and displaying images, a necessary preliminary step in building image recognition systems.
 
