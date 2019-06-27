@@ -3,27 +3,7 @@
 
 ## Introduction
 
-In this lab, we'll create a network with more than one hidden layer from scratch. The outline of this lab will be roughly the same as the previous two labs, but you'll notice that adding more hidden layers makes forward and backward propagation more complex. This is what you'll do:
-
-- You'll start with initializing the parameters in all the layers.
-- You'll implement the forward propagation module:
-     - First, you'll combine a linear step and an activation function in a linear forward function.
-     - Next, you'll stack the linear forward function L-1 time with a RELU activation function (for layers 1 through L-1) and then add a sigmoid layer at the end (for the final layer $L$). 
-- You'll create the loss function.
-- You'll implement the backward propagation module using three helper functions:
-    - First, you'll create a function for the linear part of a layer's backward propagation step.
-    - Next, we'll tell you how to get the gradients for the activation functions (RELU and sigmoid) and you'll implement this along with the linear part of the activation step to create a backward function.
-    - Lastly, you'll stack the backward function L-1 times with the RELU activation and add the sigmoid activation in the $L$th layer in a new L_model_backward function
-- You'll conclude your model by updating the parameters
-- At the end of this lab, you'll combine all the helper functions in a function called `L_layer_model` and apply this model to the Santa data set you've used before!
-
-## Objectives
-
-You will be able to:
-* Explain the architecture of a neural network
-* Load and display images from file
-* Batch load and process directories of images using Keras
-* Code a multi-layer neural network from scratch
+For the final lab in this section, we'll build a more advanced **_Multi-Layer Perceptron_** to solve image classification for a classic dataset, MNIST!  This dataset consists of thousands of labeled images of handwritten digits, and it has a special place in the history of Deep Learning.
 
 ## Packages
 
@@ -31,420 +11,276 @@ First, let's import all the packages that you 'll need for this lab.
 
 
 ```python
+import pandas as pd
 import numpy as np
-import h5py
 import matplotlib.pyplot as plt
-
 %matplotlib inline
-plt.rcParams['figure.figsize'] = (5.0, 5.0) 
-plt.rcParams['image.interpolation'] = 'nearest'
-plt.rcParams['image.cmap'] = 'gray'
-
-%load_ext autoreload
-%autoreload 2
-
-np.random.seed(123)
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.datasets import mnist
 ```
 
-## Initialization in an L-layer Neural Network
+    Using TensorFlow backend.
 
-Let's look at the initialization function you created in the previous lab. We'll try to convert this helper function to a function that can be used in a setting with $L$ layers.
 
-Remember from the previous lab that, with one hidden layer, we initialized W and b as follows:
+##  The data
 
-```python
-def initialize_parameters(n_0, n_1, n_2):
-    np.random.seed(123) 
-    W1 = np.random.randn(n_1, n_0) * 0.05 
-    b1 = np.zeros((n_1, 1))
-    W2 =  np.random.randn(n_2, n_1) * 0.05 
-    b2 = np.zeros((n_2, 1))
-    
-    parameters = {"W1": W1,
-                  "b1": b1,
-                  "W2": W2,
-                  "b2": b2}
-    
-    return parameters
-```
+Before we get into building the model, let's load our data and take a look at a sample image and label.
 
-Here, n_0 was the size of the input layer, n_1 the size of the hidden layer and n_2 the size of the output layer.  
+The MNIST dataset is often used for benchmarking model performance in the world of AI/Deep Learning research. Because it's commonly used, Keras actually includes a helper function to load the data and labels from MNIST--it even loads the data in a format already split into training and testing sets!
 
-Our returned parameters represented weights (W1 and W2) and biases (b1 and b2) for these 2 layers (input to hidden and hidden to output). 
-
-The dimensions of these parameters is an important observation which you'll work to generalize in the function below.  
-
-* W1 has a shape of (n_1, n_0)
-    * after all these weights transform our input to the hidden layer
-* b1 has a shape of (n_1, 1)
-    * this is a vector
-* W2 has a shape of (n_2, n_1)
-    * these weights compute our transformation from the hidden to output layer
-* b2 has a shape of (n_2, 1)
-    * again a vector of the bias for each of our final outputs
-
-We want to generalize this function such that the parameter initialization function takes a list of arbitrary length instead of `(n_0, n_1, n_2)`, and computes as many `W`'s and `b`'s as there are layers, (hence, L of each). In this function, you'll loop over the list which is entered as an argument in `initialize_parameters_deep`. For each layer $l$, initialize $W^{[l]}$ and $b^{[l]}$.
-
-To make it a little easier, recall from the lecture that 
-
-$$W^{[l]}: (n^{[l]}, n^{[l-1]})$$
-
-$$b^{[l]}: (n^{[l]}, 1)$$
+Run the cell below to load the MNIST dataset. Note that if this is the first time you've worked with MNIST through Keras, this will take a few minutes while Keras downloads the data.
 
 
 ```python
-#Your code here; 
-#create a dictionary of parameters for W and b given a list of layer dimensions.
-#Simply randomly initialize values in accordance to the shape each parameter should have.
-#Use random seed 123 (as provided)
-def initialize_parameters_deep(list_layer_dimensions):
-    
-    np.random.seed(123)
-    parameters = {}
-    
-    #Your code here
-        
-    return parameters
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
 ```
-
-## Forward propagation
-
-### Linear forward and activation for 1 layer
-Let's start building on a propagation module. As you know, in each layer of nodes $l$, two things happen
-
-- A linear transformation $Z^{[l]} = W^{[l]}A^{[l-1]} +b^{[l]}$, where $A^{[0]} = X$. You may also find `np.dot()` useful here.
-- An activation function is applied to the linear transformation. in this lab, the two activation functions are used in the neural network are:
-    - *Sigmoid*: $A^{[l]} = \sigma(Z^{[l]}) = \frac{1}{ 1 + e^{-(Z^{[l]})}}$. You can          program this in python using `np.exp()`.
-    - *ReLU*: The mathematical formula for ReLu is $A^{[l]} $= RELU$(Z^{[l]})$ =$ \max(0, Z^{[l]})$. You can  program this in python using `np.maximum()`.
-
-Below, we'll define such a function. 
-
-The output of this function will be the activation A. Additionally, we save some intermediate values for our backpropagation later on. We'll define `1inear_cache` to save the elements of the linear transformation `(A_prev, W, b)`, and `activation_cache` to save `Z`. We'll store these together in one dictionary, `cache`.
-
-
-```python
-#Complete the templated function below as indicated by the comments
-#Be sure to also carefully review the function in general in order to continue building your understanding.
-def linear_activation_forward(A_prev, W, b, activation):
- 
-    Z = #Your code here; see the linear transformation above for how to compute Z
-    linear_cache = (A_prev, W, b)
-    activation_cache = Z
-    
-    #Here we define two possible activation functions
-    if activation == "sigmoid":
-        A = #Your code here; use the appropriate function for a sigmoid activation function
-    
-    elif activation == "relu":
-        A = #Your code here; use the appropriate function for the ReLU activation function.
-    
-    assert (A.shape == (W.shape[0], A_prev.shape[1]))
-    cache = (linear_cache, activation_cache)
-
-    return A, cache
-```
-
-### Extending to  L layers
-
-From here, we'll build a neural network with $L-1$ RELU layers and the last layer L with a SIGMOID activation function. Let's build a function that implements this using `linear_activation_forward()`.
-
-The second argument of the function `L_model_forward` is `parameters`. Recall that this is a dictionary storing (initialized) parameters `W` and `b` for each layer of the network. We'll loop over all the values of W and b, and they are inputs of the function `linear_activation_forward`. Recall that you can use something like this to loop over `W1`, `W2`, etc.: `parameters['W'+ str(i)]` with `i` the index value.
-
-We denote `AL` the output of the last layer (so, $\hat y$).
-
-
-Make sure to keep track of the caches in the "caches" list. To add a new value `cache` to a `list`, you can use `list.append(cache)`.
-
-
-```python
-#Once again, complete this templated function as indicated by the comments provided.
-def L_model_forward(X, parameters):
-    #Initialize a cache list to keep track of the caches
-    #Your code here
-    A = X
-    L = len(parameters) // 2 # number of layers in the neural network
-    
-    # Implement the RELU activation L-1 times. Add "cache" to the "caches" list.
-    #Your code here
-    
-    # Implement the sigmoid function for the last layer. Add "cache" to the "caches" list.
-    #Your code here
-    
-    assert(AL.shape == (1,X.shape[1]))
-            
-    return AL, caches
-```
-
-Great! Now you have a full forward propagation that takes the input X and outputs a row vector $A^{[L]}$ containing your predictions. It also records all intermediate values in "caches". 
-
-## The cost function
-
-Just like in the last lab, the activation in the last layer provides us with the predictions on all the samples. The activations were denoted as $a^{[2] (i)}$ in the last lab (where we had one hidden layer), here they are 
-$a^{[L] (i)}$, or our vectorized $A^{[L]}$ output from `L_model_forward`. The resulting cross-entropy cost, J, is essentially the same:
-
-$$J = -\frac{1}{m} \sum\limits_{i = 1}^{m} (y^{(i)}\log\left(a^{[L] (i)}\right) + (1-y^{(i)})\log\left(1- a^{[L](i)}\right)) $$
-
-
-
-
-```python
-#Complete the templated function below, as indicated by the comments.
-def compute_cost(AL, Y):
-        
-    m = Y.shape[1]
-
-    cost = #Your code here; use the formula above to calculate the cost.
-    cost = np.squeeze(cost)      #No edit needed; used to make sure to get shape right (e.g. turn [[17]] into 17)
-    
-    return cost
-```
-
-## Backward propagation
-
-Now that we've performed forward propagation, we will implement a similar procedure for backpropagation. This will allow us to calculate the gradient of our cost function with respect to our parameters. In turn, we will use these gradients to update our weights in our optimization process.
-
-$$\frac{d \mathcal{L}(a^{[2]},y)}{{dz^{[1]}}} = \frac{d\mathcal{L}(a^{[2]},y)}{{da^{[2]}}}\frac{{da^{[2]}}}{{dz^{[2]}}}\frac{{dz^{[2]}}}{{da^{[1]}}}\frac{{da^{[1]}}}{{dz^{[1]}}} \tag{8} $$
-
-$$dz^{[1]}= \frac{d\mathcal{L}(a^{[2]},y)}{{da^{[2]}}}\frac{{da^{[2]}}}{{dz^{[2]}}}\frac{{dz^{[2]}}}{{da^{[1]}}}\frac{{da^{[1]}}}{{dz^{[1]}}} $$
-
-$$dW^{[1]} =  \frac{d\mathcal{L}(a^{[2]},y)}{{da^{[2]}}}\frac{{da^{[2]}}}{{dz^{[2]}}}\frac{{dz^{[2]}}}{{da^{[1]}}}\frac{{da^{[1]}}}{{dz^{[1]}} }\frac{\partial z^{[1]} }{\partial W^{[1]}}$$
-
-$$db^{[1]} =  \frac{d\mathcal{L}(a^{[2]},y)}{{da^{[2]}}}\frac{{da^{[2]}}}{{dz^{[2]}}}\frac{{dz^{[2]}}}{{da^{[1]}}}\frac{{da^{[1]}}}{{dz^{[1]}} }\frac{\partial z^{[1]} }{\partial b^{[1]}}$$
-
-You are going to build the backward propagation in three steps:
-- First we will build a `linear_backward` function
-- Then we will build a linear --> activation backward function where the activation computes the derivative of either the ReLU or sigmoid activation
-- Lastly, we will backpropagate through the entire model
-
-## Linear backward
-
-
-For layer $l$, you apply a linear function defined by $Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$ afterwards, you then apply an activation function such as the sigmoid or relu functions.
-
-In our optimization process, we work backwards from our cost function through successive layers, computing gradients and then making small updates to parameter weights in order to reduce our cost. In each of these, we calculate gradients for the activation function (with respect to the cost function) and then repeat this process for the linear function associated with each of these layers.   
-
-Mathematically, our algorithm has computed the gradient of the activation function, $dZ^{[l]} = \frac{\partial \mathcal{L} }{\partial Z^{[l]}}$. Now, we want to want to get $(dW^{[l]}, db^{[l]} dA^{[l-1]})$, so that we can make updates to the weights of the linear function.
-
-
-The analytical formulas for this are:
-$$ dW^{[l]} = \frac{\partial \mathcal{L} }{\partial W^{[l]}} = \frac{1}{m} dZ^{[l]} A^{[l-1] T} \tag{8}$$
-$$ db^{[l]} = \frac{\partial \mathcal{L} }{\partial b^{[l]}} = \frac{1}{m} \sum_{i = 1}^{m} dZ^{[l](i)}\tag{9}$$
-$$ dA^{[l-1]} = \frac{\partial \mathcal{L} }{\partial A^{[l-1]}} = W^{[l] T} dZ^{[l]} \tag{10}$$
-
-Use these functions to complete the skeleton `linear_backward` function below. The function will take in dZ and our current cache object and should return dA (from the previous layer) as well as dW and db from the current layer.
-
-
-```python
-#Complete the skeleton function below
-def linear_backward(dZ, cache):
-    A_prev, W, b = cache #Unpacking our complex object
-    m = A_prev.shape[1]
-
-    dW = #Your code here; see the formulas above
-    db = #Your code here; see the formulas above
-    dA_prev = #Your code here; see the formulas above
-    
-    return dA_prev, dW, db
-```
-
-##   Linear and activation backward
-
-Now, we'll merge `linear_backward` with our activation backward to have a complete `linear_activation_backward` function. Essentially, we are now computing `dZ` which we were discussing above.
-
-That is, $ dZ^{[l]}= dA ^{[l]} * g^{[l]'} (Z^{[l]})$. 
-To calculate the derivatives we have two different scenarios, depending on the activation function of choice:
-
-- If we are using the **sigmoid activation**:
-
-$g^{[l]'} (Z^{[l]}) = \dfrac{1}{(1+\exp(-Z))}\biggr(1- \dfrac{1}{(1+\exp(-Z))}\biggr) $
-
-This is often easier expressed using the intermediate variable s:
-
-$s = \dfrac{1}{(1+\exp(-Z))}$
-
-giving us
-
-$g^{[l]'} (Z^{[l]}) = s \bullet (1-s)$
-
-
-- If we are using the **relu activation**, we simply inspect the previous activation cache. Recall that the relu is a binary decision; all values less than zero from our activation cache will be set to zero.
-
-Below, complete the skeleton function.
-
-
-
-```python
-#Complete the skeleton function below
-def linear_activation_backward(dA, cache, activation):
-    linear_cache, activation_cache = cache
-    Z= activation_cache
-    
-    if activation == "sigmoid": 
-        s = #Your code here; see the formula above
-        dZ = #Your code here; see the formula above
-        dA_prev, dW, db = linear_backward(dZ, linear_cache)
-        
-    elif activation == "relu":
-        dZ = np.array(dA, copy=True) # just converting dz to a correct object.
-        #Your code here; see the formula above to update your initialized dZ
-        dA_prev, dW, db = linear_backward(dZ, linear_cache)
-    
-    return dA_prev, dW, db
-```
-
-## L-Model Backward 
-
-Great! Now to perform our optimization, we need to cycle through our layers, starting with layer L and working backwards.
-
-
-We've seen that to backpropagate, we look to compute the gradient of the activation layer, `dAL` $= \frac{\partial \mathcal{L}}{\partial A^{[L]}}$. Using calculus (not covered here), we can calculate this with the formula, 
-
-```python
-dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL)) # derivative of cost wrt AL
-```
-
-You can then feed this into our `linear_activation_backward` function that we defined above to successively update the gradients stored in our cache. Remember that our last layer of the network will be the first to be updated and uses the sigmoid activation function (appropriate for our classification purposes). All of the previous layers, will use the relu activation function. 
-
-With that, complete the skeleton function `L_model_backward` below in order to successively calculate the gradients for each layer and return these as a dictionary.
-
-
-```python
-#Complete the skeleton function below (there are 3 lines that need to be completed)
-def L_model_backward(AL, Y, caches):
-    grads = {}
-    L = len(caches) # the number of layers
-    m = AL.shape[1]
-    Y = Y.reshape(AL.shape) # after this line, Y is the same shape as AL
-    
-    # Initializing the backpropagation
-    dAL = #Your code here; see the code snippet above
-    
-    # Lth layer (SIGMOID -> LINEAR) gradients. Inputs: "dAL, current_cache". Outputs: "grads["dAL-1"], grads["dWL"], grads["dbL"]
-    current_cache = caches[L-1]
-    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = #Your code here; use the helper function defined above
-    
-    # Loop from l=L-2 to l=0
-    for l in reversed(range(L-1)):
-        # (RELU -> LINEAR) gradients
-        # Inputs: "grads["dA" + str(l + 1)], current_cache". Outputs: "grads["dA" + str(l)] , grads["dW" + str(l + 1)] , grads["db" + str(l + 1)] 
-        current_cache = caches[l]
-        dA_prev_temp, dW_temp, db_temp = #Your code here; use the helper function defined above
-        grads["dA" + str(l)] = dA_prev_temp
-        grads["dW" + str(l + 1)] = dW_temp
-        grads["db" + str(l + 1)] = db_temp
-
-    return grads
-```
-
-## Parameter updates
-
-Now that we have calculated all of the gradients, you need to write a function that will perform parameter updates given the current weights, the gradients, and a learning rate. Recall that in gradient descent, this will simply be taking the current parameters and taking a step of size $\alpha$ (the learning rate) opposite the gradient:
-
-$$ W^{[l]} = W^{[l]} - \alpha \text{ } dW^{[l]} $$
-$$ b^{[l]} = b^{[l]} - \alpha \text{ } db^{[l]} $$
-
-When completing the skeleton function below, after computing the updated parameters, store them in the parameters dictionary. 
-
-
-```python
-def update_parameters(parameters, grads, learning_rate):
-    
-    L = len(parameters) // 2 # number of layers in the neural network
-    
-    #Your code here
-    return parameters
-```
-
-##  The data 
-
-First, let's take a look at how to load a raw image from file and display it:
-
-
-```python
-import matplotlib.image as mpimg
-filename = 'data/validation/santa/00000448.jpg'
-img=mpimg.imread(filename)
-plt.imshow(img)
-print(img.shape)
-plt.show()
-```
-
-    (720, 687, 4)
-    
-
-
-![png](output_27_1.png)
-
 
 Great!  
 
-Now let's take a look at how we can examine the gist of this code, but don't worry if you don't understand all the ins and out of the keras preprocessing method `ImageDataGenerator`. We'll explain in more detail when working with convolutional neural networks. The import piece to note here is the drastic image downgrade that we're doing here. The raw images would contain far more information but this would also be costly in time and hardware resources.
+Now, let's quickly take a look at an image from the MNIST dataset--we can visualize it using matplotlib. Run the cell below to visualize the first image and its corresponding label.
 
 
 ```python
-import time
-import matplotlib.pyplot as plt
-import scipy
-from PIL import Image
-from scipy import ndimage
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-
-
-%matplotlib inline
-plt.rcParams['figure.figsize'] = (5.0, 4.0) # set default size of plots
-plt.rcParams['image.interpolation'] = 'nearest'
-plt.rcParams['image.cmap'] = 'gray'
-
-np.random.seed(1)
+sample_image = X_train[0]
+sample_label =y_train[0]
+display(plt.imshow(sample_image))
+print("Label: {}".format(sample_label))
 ```
+
+
+    <matplotlib.image.AxesImage at 0x1c5a9244518>
+
+
+    Label: 5
+
+
+
+![png](index_files/output_8_2.png)
+
+
+Great! That was easy. Now, we'll see that preprocessing image data has a few extra steps in order to get it into a shape where an MLP can work with it.
+
+## Preprocessing Images For Use With MLPs
+
+By definition, images are matrices--they are a spreadsheet of pixel values between 0 and 255. We can see this easily enough by just looking at a raw image:
 
 
 ```python
-# directory path
-train_data_dir = 'data/train'
-test_data_dir = 'data/validation'
-
-# get all the data in the directory data/validation (132 images), and reshape them
-test_generator = ImageDataGenerator().flow_from_directory(
-        test_data_dir, 
-        target_size=(64, 64), batch_size=132) 
-
-# get all the data in the directory data/train (790 images), and reshape them
-train_generator = ImageDataGenerator().flow_from_directory(
-        train_data_dir, 
-        target_size=(64, 64), batch_size=790)
-
-# create the data sets
-train_images, train_labels = next(train_generator)
-test_images, test_labels = next(test_generator)
+sample_image
 ```
 
-Note the drastic difference of one of these images as compared to the raw file:
 
-(Yes; it is just an incoherent blob of dots after our tremendous compression.)
+
+
+    array([[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   3,
+             18,  18,  18, 126, 136, 175,  26, 166, 255, 247, 127,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,  30,  36,  94, 154, 170,
+            253, 253, 253, 253, 253, 225, 172, 253, 242, 195,  64,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,  49, 238, 253, 253, 253, 253,
+            253, 253, 253, 253, 251,  93,  82,  82,  56,  39,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,  18, 219, 253, 253, 253, 253,
+            253, 198, 182, 247, 241,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,  80, 156, 107, 253, 253,
+            205,  11,   0,  43, 154,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,  14,   1, 154, 253,
+             90,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 139, 253,
+            190,   2,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  11, 190,
+            253,  70,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  35,
+            241, 225, 160, 108,   1,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+             81, 240, 253, 253, 119,  25,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,  45, 186, 253, 253, 150,  27,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,  16,  93, 252, 253, 187,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0, 249, 253, 249,  64,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,  46, 130, 183, 253, 253, 207,   2,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  39,
+            148, 229, 253, 253, 253, 250, 182,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  24, 114, 221,
+            253, 253, 253, 253, 201,  78,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,  23,  66, 213, 253, 253,
+            253, 253, 198,  81,   2,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,  18, 171, 219, 253, 253, 253, 253,
+            195,  80,   9,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,  55, 172, 226, 253, 253, 253, 253, 244, 133,
+             11,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0, 136, 253, 253, 253, 212, 135, 132,  16,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0],
+           [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+              0,   0]], dtype=uint8)
+
+
+
+This is a problem in its current format, because MLPs take their input as vectors, not matrices or tensors. If all of the images were different sizes, then we would have a more significant problem on our hands, because we'd have challenges getting each image reshaped into a vector the exact same size as our input layer. However, this isn't a problem with MNIST, because all images are black white 28x28 pixel images. This means that we can just concatenate each row (or column) into a single 784-dimensional vector! Since each image will be concatenated in the exact same way, positional information is still preserved (e.g. the pixel value for the second pixel in the second row of an image will always be element number 29 in the vector).
+
+Let's get started. In the cell below, print the `.shape` of both `X_train` and `X_test`
 
 
 ```python
-print(train_images[0].shape)
-plt.imshow(train_images[0])
+print(X_train.shape)
+X_test.shape
 ```
 
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    
-
-    (64, 64, 3)
-    
+    (60000, 28, 28)
 
 
 
 
-    <matplotlib.image.AxesImage at 0xb1e119f98>
+
+    (10000, 28, 28)
+
+
+
+We can interpret these numbers as saying "X_train consists of 60,000 images that are 28x28". We'll need to reshape them from `(28, 28)`,a 28x28 matrix, to `(784,)`, a 784-element vector. However, we need to make sure that the first number in our reshape call for both `X_train` and `X_test` still correspond to the number of observations we have in each.
+
+In the cell below:
+
+* Use the `.reshape()` method to reshape X_train. The first parameter should be `60000`, and the second parameter should be `784`.
+* Similarly, reshape `X_test` to `10000` and `784`.
+* Also, chain both `.reshape()` calls with an `.astype("float32")`, so that we can our data from type `uint8` to `float32`.
+
+
+```python
+X_train = X_train.reshape(60000, 784).astype("float32")
+X_test = X_test.reshape(10000, 784).astype("float32")
+```
+
+Now, let's check the shape of our training and testing data again to see if it worked.
+
+
+```python
+print(X_train.shape)
+X_test.shape
+```
+
+    (60000, 784)
 
 
 
 
-![png](output_32_3.png)
 
+    (10000, 784)
+
+
+
+Great! Now, we just need to normalize our data!
+
+## Normalizing Image Data
+
+Anytime we need to normalize image data, there's a quick hack we can use to do so easily. Since all pixel values will always be between 0 and 255, we can just scale our data by dividing every element by 255! Run the cell below to do so now.
+
+
+```python
+X_train /= 255.
+X_test /= 255.
+```
+
+Great! We've now finished preprocessing our image data. However, we still need to deal with our labels.
+
+## Preprocessing our Labels
+
+Let's take a quick look at the first 10 labels in our training data:
+
+
+```python
+y_train[:10]
+```
+
+
+
+
+    array([5, 0, 4, 1, 9, 2, 1, 3, 1, 4], dtype=uint8)
+
+
+
+As we can see, the labels for each digit image in the training set are stored as the corresponding integer value--if the image is of a 5, then the corresponding label will be `5`. This means that this is a **_Multiclass Classification_** problem, which means that we need to **_One-Hot Encode_** our labels before we can use them for training.
+
+Luckily, Keras provides a really easy utility function to handle this for us.
+
+In the cell below:
+
+* Use the function `to_categorical()` to one-hot encode our labels. This function can be found inside `keras.utils`. Pass in the following parameters:
+    * The object we want to one-hot encode, which will be `y_train` or `y_test`
+    * The number of classes contained in the labels, `10`.
+
+
+```python
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test = keras.utils.to_categorical(y_test, 10)
+```
+
+Great. Now, let's examine the label for the first data point, which we saw was `5` before.
+
+
+```python
+y_train[0]
+```
+
+
+
+
+    array([0., 0., 0., 0., 0., 1., 0., 0., 0., 0.], dtype=float32)
+
+
+
+Perfect! As we can see, the index corresponding to the number `5` is set to `1`, which everything else is set to `0`. That was easy!  Now, let's get to the fun part--building our model!
+
+## Building Our Model
+
+For the remainder of this lab, we won't hold your hand as much--flex your newfound keras muscles and build an MLP with the following specifications:
+
+* A `Dense` hidden layer with `64` neurons, and a `'tanh'` activation function. Also, since this is the first hidden layer, be sure to also pass in `input_shape=(784,)` in order to create a correctly-sized input layer!
+* Since this is a multiclass classification problem, our output layer will need to be a `Dense` layer where the number of neurons is the same as the number of classes in the labels. Also, be sure to set the activation function to `'softmax'`.
 
 ## Data Exploration and Normalization
 
@@ -452,224 +288,270 @@ Be sure to carefully review the three code blocks below. Here, we demonstrate so
 
 
 ```python
-# Explore your dataset again
-m_train = train_images.shape[0]
-num_px = train_images.shape[1]
-m_test = test_images.shape[0]
-
-print ("Number of training examples: " + str(m_train))
-print ("Number of testing examples: " + str(m_test))
-print ("Each image is of size: (" + str(num_px) + ", " + str(num_px) + ", 3)")
-print ("train_images shape: " + str(train_images.shape))
-print ("train_labels shape: " + str(train_labels.shape))
-print ("test_images_orig shape: " + str(test_images.shape))
-print ("test_labels shape: " + str(test_labels.shape))
+model_1  = Sequential()
+model_1.add(Dense(64, activation='tanh', input_shape=(784,)))
+model_1.add(Dense(10, activation='softmax'))
 ```
+
+Now, compile your model with the following parameters:
+
+* `loss='categorical_crossentropy'`
+* `optimizer='sgd'`
+* `metrics = ['accuracy']`
 
 
 ```python
-# Reshape the training and test examples 
-train_img = train_images.reshape(train_images.shape[0], -1).T   # The "-1" makes reshape flatten the remaining dimensions
-test_img = test_images.reshape(test_images.shape[0], -1).T
-
-# Standardize data to have feature values between 0 and 1.
-train_x = train_img/255.
-test_x = test_img/255.
-
-print ("train_img's shape: " + str(train_img.shape))
-print ("test_img's shape: " + str(test_img.shape))
-
+model_1.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 ```
 
-Output needs to be of shape $(1, X_n)$, so we perform a little manipulation by reshaping our data.
+Let's quickly inspect the shape of our model before training it and see how many training parameters we have. In the cell below, call the model's `.summary()` method.
 
 
 ```python
-# Reshape the labels
-train_labels_final = train_labels.T[[1]]
-test_labels_final = test_labels.T[[1]]
-
-print ("train_labels_final's shape: " + str(train_labels_final.shape))
-print ("test_labels_final's shape: " + str(test_labels_final.shape))
+model_1.summary()
 ```
 
-We're about to run our model, and for our example, we'll define a 4 layer model. The parameter below indicate our input size of the images, the size of our hidden layers, and finally, that we are looking for a singular class output.
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #   
+    =================================================================
+    dense_1 (Dense)              (None, 64)                50240     
+    _________________________________________________________________
+    dense_2 (Dense)              (None, 10)                650       
+    =================================================================
+    Total params: 50,890
+    Trainable params: 50,890
+    Non-trainable params: 0
+    _________________________________________________________________
+
+
+50,890 trainable parameters! Note that while this may seem large, deep neural networks in production may have hundreds or thousands of layers and many millions of trainable parameters!
+
+Let's get on to training. In the cell below, fit the model. Use the following parameters:
+
+* Our training data and labels
+* `epochs=5`
+* `batch_size=64`
+* `validation_data=(X_test, y_test)`
 
 
 ```python
-layers_dims = [12288, 20, 7, 5, 1] #  4-layer model
+results_1 = model_1.fit(X_train, y_train, epochs=5, batch_size=64, validation_data=(X_test, y_test))
 ```
 
-## Putting It All Together
+    Train on 60000 samples, validate on 10000 samples
+    Epoch 1/5
+    60000/60000 [==============================] - 5s 78us/step - loss: 0.8419 - acc: 0.7958 - val_loss: 0.4952 - val_acc: 0.8812
+    Epoch 2/5
+    60000/60000 [==============================] - 3s 45us/step - loss: 0.4503 - acc: 0.8840 - val_loss: 0.3864 - val_acc: 0.8980
+    Epoch 3/5
+    60000/60000 [==============================] - 3s 45us/step - loss: 0.3793 - acc: 0.8966 - val_loss: 0.3419 - val_acc: 0.9079
+    Epoch 4/5
+    60000/60000 [==============================] - 3s 45us/step - loss: 0.3436 - acc: 0.9056 - val_loss: 0.3168 - val_acc: 0.9111
+    Epoch 5/5
+    60000/60000 [==============================] - 3s 46us/step - loss: 0.3204 - acc: 0.9107 - val_loss: 0.2979 - val_acc: 0.9171
 
-Now, let's finalize all of our work and put everything together to construct our deep network model. Below, initialize parameters for the model and use our helper functions defined above to perform gradient descent to optimize these weights with respect to our loss function. Afterwards, the included code will then plot the cost function over the number of training cycles run.
+
+## Visualizing Our Loss and Accuracy Curves
+
+Now, let's inspect the model's performance and see if we detect any overfitting or other issues. In the cell below, create two plots:
+
+* The `loss` and `val_loss` over the training epochs
+* The `acc` and `val_acc` over the training epochs
+
+**_HINT:_** Consider copying over the visualization function from the previous lab in order to save time!
 
 
 ```python
-#Review and complete the skeleton function below.
-def L_layer_model(X, Y, layers_dims, learning_rate = 0.005, num_iterations = 3000, print_cost=False):#lr was 0.009
-    np.random.seed(1)
-    costs = []                         
-    
-    # Parameters initialization. (≈ 1 line of code)
-    parameters = #Your code here; use the previous helper functions
-    
-    # Create a Loop (for gradient descent)
-
-        # Forward propagation: [LINEAR -> RELU]*(L-1) -> LINEAR -> SIGMOID.
-        AL, caches = #Your code here; use the previous helper functions
-        
-        # Compute cost.
-        cost = #Your code here; use the previous helper functions
-    
-        # Backward propagation.
-        grads = #Your code here; use the previous helper functions
- 
-        # Update parameters.
-        parameters = #Your code here; use the previous helper functions
-                
-        # Print the cost every 100 training example
-        if print_cost and i % 100 == 0:
-            print ("Cost after iteration %i: %f" %(i, cost))
-        if print_cost and i % 100 == 0:
-            costs.append(cost)
-            
-    # plot the cost
-    plt.plot(np.squeeze(costs))
-    plt.ylabel('cost')
-    plt.xlabel('iterations (per tens)')
-    plt.title("Learning rate =" + str(learning_rate))
+def visualize_training_results(results):
+    history = results.history
+    plt.figure()
+    plt.plot(history['val_loss'])
+    plt.plot(history['loss'])
+    plt.legend(['val_loss', 'loss'])
+    plt.title('Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
     plt.show()
-    
-    return parameters
-```
 
-## Call Your Function to Run the Model Training!
-
-Use your function to calculate parameter weights using our training set outlined above.
-
-
-```python
-parameters = #Your code here; use the helper function defined above
-```
-
-## Returning Predictions
-
-No edits to this cell. Now that you've trained a model, the code below will take these parameters and calculate class probabilities for the input data. Optionally, if the actual class labels are provided (y) the function will also compute the accuracy of the model on this training data.
-
-
-```python
-#No edits needed here; simply review the code below.
-def predict(X, parameters, y=None):
-    
-    m = X.shape[1]
-    n = len(parameters) // 2
-    
-    # Forward propagation
-    probs, caches = L_model_forward(X, parameters)
-
-    # convert probs to 0/1 predictions
-    for i in range(0, probs.shape[1]):
-        if probs[0,i] > 0.50:
-            probs[0,i] = 1
-        else:
-            probs[0,i] = 0
-    
-    #print ("predictions: " + str(probs)); print ("true labels: " + str(y))
-    if type(y) != type(None):
-        print("Accuracy: "  + str(np.sum((probs == y)/m)))
-        
-    return probs
+    plt.figure()
+    plt.plot(history['val_acc'])
+    plt.plot(history['acc'])
+    plt.legend(['val_acc', 'acc'])
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.show()
 ```
 
 
 ```python
-pred_train = #Your code here; use the helper function defined above
+visualize_training_results(results_1)
+```
+
+
+![png](index_files/output_36_0.png)
+
+
+
+![png](index_files/output_36_1.png)
+
+
+Pretty good! Note that since our validation scores are currently higher than our training scores, its extremely unlikely that our model is overfitting the training data. This is a good sign--that means that we can probably trust the results that our model is ~91.7% accurate at classifying handwritten digits!
+
+## Building a Bigger Model
+
+Now, let's add another hidden layer and see how this changes things. In the cells below, create a second model. This model should have the following architecture:
+
+* Input layer and first hidden layer same as `model_1`
+* Another `Dense` hidden layer, this time with `32` neurons and a `'tanh'` activation function
+* An output layer same as `model_1`.
+
+Build this model in the cell below.
+
+
+```python
+model_2 = Sequential()
+model_2.add(Dense(64, activation='tanh', input_shape=(784,)))
+model_2.add(Dense(32, activation='tanh'))
+model_2.add(Dense(10, activation='softmax'))
+```
+
+Let's quickly inspect the `.summary()` of the model again, to see how many new trainable parameters this extra hidden layer has introduced.
+
+
+```python
+model_2.summary()
+```
+
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #   
+    =================================================================
+    dense_3 (Dense)              (None, 64)                50240     
+    _________________________________________________________________
+    dense_4 (Dense)              (None, 32)                2080      
+    _________________________________________________________________
+    dense_5 (Dense)              (None, 10)                330       
+    =================================================================
+    Total params: 52,650
+    Trainable params: 52,650
+    Non-trainable params: 0
+    _________________________________________________________________
+
+
+This model isn't much bigger, but the layout means that the 2080 parameters in the new hidden layer will be focused on higher layers of abstraction than the first hidden layer. Let's see how it compares after training.
+
+In the cells below, compile and fit the model using the same parameters as we did for `model_1`.
+
+
+```python
+model_2.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 ```
 
 
 ```python
-pred_test = #Your code here; use the helper function defined above
+results_2 = model_2.fit(X_train, y_train, batch_size=64, epochs=5, validation_data=(X_test, y_test))
 ```
 
-## Print mislabeled images
+    Train on 60000 samples, validate on 10000 samples
+    Epoch 1/5
+    60000/60000 [==============================] - 3s 51us/step - loss: 0.9263 - acc: 0.7694 - val_loss: 0.5239 - val_acc: 0.8764
+    Epoch 2/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.4591 - acc: 0.8826 - val_loss: 0.3839 - val_acc: 0.8996
+    Epoch 3/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.3693 - acc: 0.9011 - val_loss: 0.3301 - val_acc: 0.9112
+    Epoch 4/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.3255 - acc: 0.9100 - val_loss: 0.2990 - val_acc: 0.9182
+    Epoch 5/5
+    60000/60000 [==============================] - 3s 49us/step - loss: 0.2973 - acc: 0.9168 - val_loss: 0.2764 - val_acc: 0.9223
 
-Finally, here we demonstrate iterating through our images and printing those that are mislabeled. Be sure to make note of the code used for displaying these images, similar to what we saw above.
+
+Now, visualize the plots again.
 
 
 ```python
-def print_mislabeled_images(classes, X, y, p):
-    a = p + y
-    mislabeled_indices = np.asarray(np.where(a == 1))
-    plt.rcParams['figure.figsize'] = (90.0, 90.0) # set default size of plots
-    num_images = len(mislabeled_indices[0])
-    for i in range(num_images):
-        index = mislabeled_indices[1][i]
-        
-        plt.subplot(2, num_images, i + 1)
-        plt.imshow(X[:,index].reshape(64,64,3), interpolation='nearest')
-        plt.axis('off')
-      #  plt.title("Prediction: " + list(classes.keys())[list(classes.values()).index(int(p[0,index]))] +
-       #           " \n Class: " + list(classes.keys())[list(classes.values()).index(int(y[0,index]))])
+visualize_training_results(results_2)
+```
+
+
+![png](index_files/output_45_0.png)
+
+
+
+![png](index_files/output_45_1.png)
+
+
+Slightly better validation accuracy, with no evidence of overfitting--great! If you run the model for more epochs, you'll see the model continue to improve performance, until the validation metrics plateau and the model begins to overfit the training data.
+
+## A Bit of Tuning
+
+As a final exercise, let's see what happens to then model's performance if we switch activation functions from `'tanh'` to `'relu'`. In the cell below, recreate  `model_2`, but replace all `'tanh'` activations with `'relu'`. Then, compile, train, and plot the results using the same parameters as the other two.
+
+
+```python
+model_3 = Sequential()
+model_3.add(Dense(64, activation='relu', input_shape=(784,)))
+model_3.add(Dense(32, activation='relu'))
+model_3.add(Dense(10, activation='softmax'))
 ```
 
 
 ```python
-print_mislabeled_images(list(train_generator.class_indices), test_img, test_labels_final, pred_test)
+model_3.summary()
 ```
 
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
-    
-
-
-![png](output_50_1.png)
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #   
+    =================================================================
+    dense_10 (Dense)             (None, 64)                50240     
+    _________________________________________________________________
+    dense_11 (Dense)             (None, 32)                2080      
+    _________________________________________________________________
+    dense_12 (Dense)             (None, 10)                330       
+    =================================================================
+    Total params: 52,650
+    Trainable params: 52,650
+    Non-trainable params: 0
+    _________________________________________________________________
 
 
 
 ```python
-classes = train_generator.class_indices
+model_3.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 ```
 
+
+```python
+results_3 = model_3.fit(X_train, y_train, epochs=5, batch_size=64, validation_data=(X_test, y_test))
+```
+
+    Train on 60000 samples, validate on 10000 samples
+    Epoch 1/5
+    60000/60000 [==============================] - 3s 53us/step - loss: 1.0062 - acc: 0.7204 - val_loss: 0.4557 - val_acc: 0.8801
+    Epoch 2/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.3974 - acc: 0.8893 - val_loss: 0.3288 - val_acc: 0.9091
+    Epoch 3/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.3251 - acc: 0.9077 - val_loss: 0.2889 - val_acc: 0.9194
+    Epoch 4/5
+    60000/60000 [==============================] - ETA: 0s - loss: 0.2903 - acc: 0.916 - 3s 48us/step - loss: 0.2897 - acc: 0.9170 - val_loss: 0.2596 - val_acc: 0.9272
+    Epoch 5/5
+    60000/60000 [==============================] - 3s 48us/step - loss: 0.2639 - acc: 0.9252 - val_loss: 0.2408 - val_acc: 0.9332
+
+
+
+```python
+visualize_training_results(results_3)
+```
+
+
+![png](index_files/output_52_0.png)
+
+
+
+![png](index_files/output_52_1.png)
+
+
+Performance improved even further! ReLU is one of the most commonly used activation functions around right now--it's especially useful in computer vision problems like image classification, as we've just seen.
 
 ## Summary
 
-In this lab, you once again practiced and reviewed the process of building a neural network. This time, we built a more complex network with additional layers which drastically improves the performance on our data set with Santa images! We also made note of some important methods for importing and displaying images, a necessary preliminary step in building image recognition systems.
-
+In this lab, you once again practiced and reviewed the process of building a neural network. This time, we built a more complex network with additional layers which improved the performance on our data set with MNIST images!
