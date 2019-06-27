@@ -204,7 +204,7 @@ Slightly better validation accuracy, with no evidence of overfitting--great! If 
 
 ## A Bit of Tuning
 
-As a final exercise, let's see what happens to then model's performance if we switch activation functions from `'tanh'` to `'relu'`. In the cell below, recreate  `model_2`, but replace all `'tanh'` activations with `'relu'`. Then, compile, train, and plot the results using the same parameters as the other two. 
+As a final exercise, let's see what happens to the model's performance if we switch activation functions from `'tanh'` to `'relu'`. In the cell below, recreate  `model_2`, but replace all `'tanh'` activations with `'relu'`. Then, compile, train, and plot the results using the same parameters as the other two. 
 
 
 ```python
