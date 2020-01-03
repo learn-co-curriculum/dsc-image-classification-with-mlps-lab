@@ -1,13 +1,17 @@
 
-# Deep Networks: Building an Image Classifier - Lab
+# Image Classification with MLPs - Lab
 
 ## Introduction
 
 For the final lab in this section, we'll build a more advanced **_Multi-Layer Perceptron_** to solve image classification for a classic dataset, MNIST!  This dataset consists of thousands of labeled images of handwritten digits, and it has a special place in the history of Deep Learning. 
 
+## Objectives 
+
+- Build a multi-layer neural network image classifier using Keras 
+
 ## Packages
 
-First, let's import all the packages that you 'll need for this lab.
+First, let's import all the classes and packages you'll need for this lab.
 
 
 ```python
@@ -37,13 +41,13 @@ from keras.datasets import mnist
     Using TensorFlow backend.
 
 
-##  The data 
+##  Data 
 
 Before we get into building the model, let's load our data and take a look at a sample image and label. 
 
-The MNIST dataset is often used for benchmarking model performance in the world of AI/Deep Learning research. Because it's commonly used, Keras actually includes a helper function to load the data and labels from MNIST--it even loads the data in a format already split into training and testing sets!
+The MNIST dataset is often used for benchmarking model performance in the world of AI/Deep Learning research. Because it's commonly used, Keras actually includes a helper function to load the data and labels from MNIST -- it even loads the data in a format already split into training and test sets!
 
-Run the cell below to load the MNIST dataset. Note that if this is the first time you've worked with MNIST through Keras, this will take a few minutes while Keras downloads the data. 
+Run the cell below to load the MNIST dataset. Note that if this is the first time you are working with MNIST through Keras, this will take a few minutes while Keras downloads the data. 
 
 
 ```python
@@ -58,14 +62,14 @@ Run the cell below to load the MNIST dataset. Note that if this is the first tim
 
 Great!  
 
-Now, let's quickly take a look at an image from the MNIST dataset--we can visualize it using matplotlib. Run the cell below to visualize the first image and its corresponding label. 
+Now, let's quickly take a look at an image from the MNIST dataset -- we can visualize it using Matplotlib. Run the cell below to visualize the first image and its corresponding label. 
 
 
 ```python
 sample_image = X_train[0]
-sample_label =y_train[0]
+sample_label = y_train[0]
 display(plt.imshow(sample_image))
-print("Label: {}".format(sample_label))
+print('Label: {}'.format(sample_label))
 ```
 
 
@@ -74,7 +78,7 @@ print("Label: {}".format(sample_label))
 sample_image = X_train[0]
 sample_label =y_train[0]
 display(plt.imshow(sample_image))
-print("Label: {}".format(sample_label))
+print('Label: {}'.format(sample_label))
 ```
 
 
@@ -92,7 +96,7 @@ Great! That was easy. Now, we'll see that preprocessing image data has a few ext
 
 ## Preprocessing Images For Use With MLPs
 
-By definition, images are matrices--they are a spreadsheet of pixel values between 0 and 255. We can see this easily enough by just looking at a raw image:
+By definition, images are matrices -- they are a spreadsheet of pixel values between 0 and 255. We can see this easily enough by just looking at a raw image:
 
 
 ```python
@@ -221,13 +225,13 @@ X_test.shape
 
 
 
-We can interpret these numbers as saying "X_train consists of 60,000 images that are 28x28". We'll need to reshape them from `(28, 28)`,a 28x28 matrix, to `(784,)`, a 784-element vector. However, we need to make sure that the first number in our reshape call for both `X_train` and `X_test` still correspond to the number of observations we have in each. 
+We can interpret these numbers as saying "`X_train` consists of 60,000 images that are 28x28". We'll need to reshape them from `(28, 28)`, a 28x28 matrix, to `(784,)`, a 784-element vector. However, we need to make sure that the first number in our reshape call for both `X_train` and `X_test` still correspond to the number of observations we have in each. 
 
 In the cell below:
 
-* Use the `.reshape()` method to reshape X_train. The first parameter should be `60000`, and the second parameter should be `784`.
-* Similarly, reshape `X_test` to `10000` and `784`. 
-* Also, chain both `.reshape()` calls with an `.astype("float32")`, so that we can our data from type `uint8` to `float32`. 
+* Use the `.reshape()` method to reshape `X_train`. The first parameter should be `60000`, and the second parameter should be `784` 
+* Similarly, reshape `X_test` to `10000` and `784`  
+* Also, chain both `.reshape()` calls with an `.astype('float32')`, so that we convert our data from type `uint8` to `float32` 
 
 
 ```python
@@ -238,11 +242,11 @@ X_test = None
 
 ```python
 # __SOLUTION__ 
-X_train = X_train.reshape(60000, 784).astype("float32")
-X_test = X_test.reshape(10000, 784).astype("float32")
+X_train = X_train.reshape(60000, 784).astype('float32')
+X_test = X_test.reshape(10000, 784).astype('float32')
 ```
 
-Now, let's check the shape of our training and testing data again to see if it worked. 
+Now, let's check the shape of our training and test data again to see if it worked. 
 
 
 ```python
@@ -270,7 +274,7 @@ Great! Now, we just need to normalize our data!
 
 ## Normalizing Image Data
 
-Anytime we need to normalize image data, there's a quick hack we can use to do so easily. Since all pixel values will always be between 0 and 255, we can just scale our data by dividing every element by 255! Run the cell below to do so now. 
+Since all pixel values will always be between 0 and 255, we can just scale our data by dividing every element by 255! Run the cell below to do so now. 
 
 
 ```python
@@ -309,15 +313,15 @@ y_train[:10]
 
 
 
-As we can see, the labels for each digit image in the training set are stored as the corresponding integer value--if the image is of a 5, then the corresponding label will be `5`. This means that this is a **_Multiclass Classification_** problem, which means that we need to **_One-Hot Encode_** our labels before we can use them for training. 
+As we can see, the labels for each digit image in the training set are stored as the corresponding integer value -- if the image is of a 5, then the corresponding label will be `5`. This means that this is a **_Multiclass Classification_** problem, which means that we need to **_One-Hot Encode_** our labels before we can use them for training. 
 
 Luckily, Keras provides a really easy utility function to handle this for us. 
 
 In the cell below: 
 
-* Use the function `to_categorical()` to one-hot encode our labels. This function can be found inside `keras.utils`. Pass in the following parameters:
-    * The object we want to one-hot encode, which will be `y_train` or `y_test`
-    * The number of classes contained in the labels, `10`.
+* Use the function `to_categorical()` to one-hot encode our labels. This function can be found in the `keras.utils` sub-module. Pass in the following parameters:
+    * The object we want to one-hot encode, which will be `y_train`/`y_test` 
+    * The number of classes contained in the labels, `10` 
 
 
 ```python
@@ -352,18 +356,14 @@ y_train[0]
 
 
 
-Perfect! As we can see, the index corresponding to the number `5` is set to `1`, which everything else is set to `0`. That was easy!  Now, let's get to the fun part--building our model!
+Perfect! As we can see, the fifth index is set to `1`, while everything else is set to `0`. That was easy!  Now, let's get to the fun part -- building our model!
 
-## Building Our Model
+## Building our Model
 
-For the remainder of this lab, we won't hold your hand as much--flex your newfound keras muscles and build an MLP with the following specifications:
+For the remainder of this lab, we won't hold your hand as much -- flex your newfound Keras muscles and build an MLP with the following specifications:
 
-* A `Dense` hidden layer with `64` neurons, and a `'tanh'` activation function. Also, since this is the first hidden layer, be sure to also pass in `input_shape=(784,)` in order to create a correctly-sized input layer!
-* Since this is a multiclass classification problem, our output layer will need to be a `Dense` layer where the number of neurons is the same as the number of classes in the labels. Also, be sure to set the activation function to `'softmax'`.
-
-## Data Exploration and Normalization
-
-Be sure to carefully review the three code blocks below. Here, we demonstrate some common data checks you are apt to perform after importing, followed by standard data normalization to set all values to a range between 0 and 1.
+* A `Dense` hidden layer with `64` neurons, and a `'tanh'` activation function. Also, since this is the first hidden layer, be sure to pass in `input_shape=(784,)` in order to create a correctly-sized input layer!
+* Since this is a multiclass classification problem, our output layer will need to be a `Dense` layer where the number of neurons is the same as the number of classes in the labels. Also, be sure to set the activation function to `'softmax'` 
 
 
 ```python
@@ -374,7 +374,7 @@ model_1  = None
 
 ```python
 # __SOLUTION__ 
-model_1  = Sequential()
+model_1 = Sequential()
 model_1.add(Dense(64, activation='tanh', input_shape=(784,)))
 model_1.add(Dense(10, activation='softmax'))
 ```
@@ -455,7 +455,7 @@ results_1 = model_1.fit(X_train, y_train, epochs=5, batch_size=64, validation_da
     60000/60000 [==============================] - 3s 46us/step - loss: 0.3204 - acc: 0.9107 - val_loss: 0.2979 - val_acc: 0.9171
 
 
-## Visualizing Our Loss and Accuracy Curves
+## Visualizing our Loss and Accuracy Curves
 
 Now, let's inspect the model's performance and see if we detect any overfitting or other issues. In the cell below, create two plots:
 
@@ -506,14 +506,14 @@ visualize_training_results(results_1)
 ```
 
 
-![png](index_files/index_53_0.png)
+![png](index_files/index_52_0.png)
 
 
 
-![png](index_files/index_53_1.png)
+![png](index_files/index_52_1.png)
 
 
-Pretty good! Note that since our validation scores are currently higher than our training scores, its extremely unlikely that our model is overfitting the training data. This is a good sign--that means that we can probably trust the results that our model is ~91.7% accurate at classifying handwritten digits!
+Pretty good! Note that since our validation scores are currently higher than our training scores, its extremely unlikely that our model is overfitting to the training data. This is a good sign -- that means that we can probably trust the results that our model is ~91.7% accurate at classifying handwritten digits!
 
 ## Building a Bigger Model
 
@@ -521,9 +521,7 @@ Now, let's add another hidden layer and see how this changes things. In the cell
 
 * Input layer and first hidden layer same as `model_1`
 * Another `Dense` hidden layer, this time with `32` neurons and a `'tanh'` activation function
-* An output layer same as `model_1`. 
-
-Build this model in the cell below.
+* An output layer same as `model_1` 
 
 
 ```python
@@ -570,7 +568,7 @@ model_2.summary()
 
 This model isn't much bigger, but the layout means that the 2080 parameters in the new hidden layer will be focused on higher layers of abstraction than the first hidden layer. Let's see how it compares after training. 
 
-In the cells below, compile and fit the model using the same parameters as we did for `model_1`.
+In the cells below, compile and fit the model using the same parameters you did for `model_1`.
 
 
 ```python
@@ -621,14 +619,14 @@ visualize_training_results(results_2)
 ```
 
 
-![png](index_files/index_67_0.png)
+![png](index_files/index_66_0.png)
 
 
 
-![png](index_files/index_67_1.png)
+![png](index_files/index_66_1.png)
 
 
-Slightly better validation accuracy, with no evidence of overfitting--great! If you run the model for more epochs, you'll see the model continue to improve performance, until the validation metrics plateau and the model begins to overfit the training data. 
+Slightly better validation accuracy, with no evidence of overfitting -- great! If you run the model for more epochs, you'll see the model's performance continues to improve until the validation metrics plateau and the model begins to overfit to training data. 
 
 ## A Bit of Tuning
 
@@ -722,16 +720,15 @@ visualize_training_results(results_3)
 ```
 
 
-![png](index_files/index_79_0.png)
+![png](index_files/index_78_0.png)
 
 
 
-![png](index_files/index_79_1.png)
+![png](index_files/index_78_1.png)
 
 
-Performance improved even further! ReLU is one of the most commonly used activation functions around right now--it's especially useful in computer vision problems like image classification, as we've just seen. 
+Performance improved even further! ReLU is one of the most commonly used activation functions around right now -- it's especially useful in computer vision problems like image classification, as we've just seen. 
 
 ## Summary
 
-In this lab, you once again practiced and reviewed the process of building a neural network. This time, we built a more complex network with additional layers which improved the performance on our data set with MNIST images! 
-
+In this lab, you once again practiced and reviewed the process of building a neural network. This time, you built a more complex network with additional layers which improved the performance of your model on the MNIST dataset! 
