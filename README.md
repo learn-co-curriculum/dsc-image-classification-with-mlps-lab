@@ -1,4 +1,3 @@
-
 # Image Classification with MLPs - Lab
 
 ## Introduction
@@ -156,7 +155,7 @@ Now, compile your model with the following parameters:
 
 * `loss='categorical_crossentropy'`
 * `optimizer='sgd'`
-* `metrics = ['accuracy']`
+* `metrics = ['acc']`
 
 
 ```python
