@@ -1,4 +1,3 @@
-
 # Image Classification with MLPs - Lab
 
 ## Introduction
@@ -37,9 +36,6 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
 ```
-
-    Using TensorFlow backend.
-
 
 ##  Data 
 
@@ -82,14 +78,16 @@ print('Label: {}'.format(sample_label))
 ```
 
 
-    <matplotlib.image.AxesImage at 0x1c5a9244518>
+    <matplotlib.image.AxesImage at 0x16364e6d0>
 
 
     Label: 5
 
 
 
+    
 ![png](index_files/index_11_2.png)
+    
 
 
 Great! That was easy. Now, we'll see that preprocessing image data has a few extra steps in order to get it into a shape where an MLP can work with it. 
@@ -383,7 +381,7 @@ Now, compile your model with the following parameters:
 
 * `loss='categorical_crossentropy'`
 * `optimizer='sgd'`
-* `metrics = ['accuracy']`
+* `metrics = ['acc']`
 
 
 ```python
@@ -393,7 +391,7 @@ Now, compile your model with the following parameters:
 
 ```python
 # __SOLUTION__ 
-model_1.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+model_1.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['acc'])
 ```
 
 Let's quickly inspect the shape of our model before training it and see how many training parameters we have. In the cell below, call the model's `.summary()` method. 
@@ -409,12 +407,13 @@ Let's quickly inspect the shape of our model before training it and see how many
 model_1.summary()
 ```
 
+    Model: "sequential"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
-    dense_1 (Dense)              (None, 64)                50240     
+    dense (Dense)                (None, 64)                50240     
     _________________________________________________________________
-    dense_2 (Dense)              (None, 10)                650       
+    dense_1 (Dense)              (None, 10)                650       
     =================================================================
     Total params: 50,890
     Trainable params: 50,890
@@ -442,17 +441,16 @@ results_1 = None
 results_1 = model_1.fit(X_train, y_train, epochs=5, batch_size=64, validation_data=(X_test, y_test))
 ```
 
-    Train on 60000 samples, validate on 10000 samples
     Epoch 1/5
-    60000/60000 [==============================] - 5s 78us/step - loss: 0.8419 - acc: 0.7958 - val_loss: 0.4952 - val_acc: 0.8812
+    938/938 [==============================] - 1s 773us/step - loss: 0.8794 - acc: 0.7851 - val_loss: 0.5103 - val_acc: 0.8736
     Epoch 2/5
-    60000/60000 [==============================] - 3s 45us/step - loss: 0.4503 - acc: 0.8840 - val_loss: 0.3864 - val_acc: 0.8980
+    938/938 [==============================] - 1s 663us/step - loss: 0.4605 - acc: 0.8795 - val_loss: 0.3950 - val_acc: 0.8938
     Epoch 3/5
-    60000/60000 [==============================] - 3s 45us/step - loss: 0.3793 - acc: 0.8966 - val_loss: 0.3419 - val_acc: 0.9079
+    938/938 [==============================] - 1s 665us/step - loss: 0.3858 - acc: 0.8943 - val_loss: 0.3482 - val_acc: 0.9058
     Epoch 4/5
-    60000/60000 [==============================] - 3s 45us/step - loss: 0.3436 - acc: 0.9056 - val_loss: 0.3168 - val_acc: 0.9111
+    938/938 [==============================] - 1s 661us/step - loss: 0.3491 - acc: 0.9030 - val_loss: 0.3217 - val_acc: 0.9106
     Epoch 5/5
-    60000/60000 [==============================] - 3s 46us/step - loss: 0.3204 - acc: 0.9107 - val_loss: 0.2979 - val_acc: 0.9171
+    938/938 [==============================] - 1s 676us/step - loss: 0.3256 - acc: 0.9090 - val_loss: 0.3045 - val_acc: 0.9160
 
 
 ## Visualizing our Loss and Accuracy Curves
@@ -506,11 +504,15 @@ visualize_training_results(results_1)
 ```
 
 
+    
 ![png](index_files/index_52_0.png)
+    
 
 
 
+    
 ![png](index_files/index_52_1.png)
+    
 
 
 Pretty good! Note that since our validation scores are currently higher than our training scores, its extremely unlikely that our model is overfitting to the training data. This is a good sign -- that means that we can probably trust the results that our model is ~91.7% accurate at classifying handwritten digits!
@@ -551,14 +553,15 @@ Let's quickly inspect the `.summary()` of the model again, to see how many new t
 model_2.summary()
 ```
 
+    Model: "sequential_1"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
-    dense_3 (Dense)              (None, 64)                50240     
+    dense_2 (Dense)              (None, 64)                50240     
     _________________________________________________________________
-    dense_4 (Dense)              (None, 32)                2080      
+    dense_3 (Dense)              (None, 32)                2080      
     _________________________________________________________________
-    dense_5 (Dense)              (None, 10)                330       
+    dense_4 (Dense)              (None, 10)                330       
     =================================================================
     Total params: 52,650
     Trainable params: 52,650
@@ -583,7 +586,7 @@ results_2 = None
 
 ```python
 # __SOLUTION__ 
-model_2.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+model_2.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['acc'])
 ```
 
 
@@ -592,17 +595,16 @@ model_2.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accu
 results_2 = model_2.fit(X_train, y_train, batch_size=64, epochs=5, validation_data=(X_test, y_test))
 ```
 
-    Train on 60000 samples, validate on 10000 samples
     Epoch 1/5
-    60000/60000 [==============================] - 3s 51us/step - loss: 0.9263 - acc: 0.7694 - val_loss: 0.5239 - val_acc: 0.8764
+    938/938 [==============================] - 1s 778us/step - loss: 0.9475 - acc: 0.7646 - val_loss: 0.5321 - val_acc: 0.8793
     Epoch 2/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.4591 - acc: 0.8826 - val_loss: 0.3839 - val_acc: 0.8996
+    938/938 [==============================] - 1s 688us/step - loss: 0.4588 - acc: 0.8855 - val_loss: 0.3847 - val_acc: 0.9028
     Epoch 3/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.3693 - acc: 0.9011 - val_loss: 0.3301 - val_acc: 0.9112
+    938/938 [==============================] - 1s 706us/step - loss: 0.3663 - acc: 0.9018 - val_loss: 0.3285 - val_acc: 0.9117
     Epoch 4/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.3255 - acc: 0.9100 - val_loss: 0.2990 - val_acc: 0.9182
+    938/938 [==============================] - 1s 677us/step - loss: 0.3223 - acc: 0.9111 - val_loss: 0.2981 - val_acc: 0.9194
     Epoch 5/5
-    60000/60000 [==============================] - 3s 49us/step - loss: 0.2973 - acc: 0.9168 - val_loss: 0.2764 - val_acc: 0.9223
+    938/938 [==============================] - 1s 700us/step - loss: 0.2944 - acc: 0.9182 - val_loss: 0.2750 - val_acc: 0.9241
 
 
 Now, visualize the plots again. 
@@ -619,11 +621,15 @@ visualize_training_results(results_2)
 ```
 
 
+    
 ![png](index_files/index_66_0.png)
+    
 
 
 
+    
 ![png](index_files/index_66_1.png)
+    
 
 
 Slightly better validation accuracy, with no evidence of overfitting -- great! If you run the model for more epochs, you'll see the model's performance continues to improve until the validation metrics plateau and the model begins to overfit to training data. 
@@ -673,14 +679,15 @@ model_3.add(Dense(10, activation='softmax'))
 model_3.summary()
 ```
 
+    Model: "sequential_2"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
-    dense_10 (Dense)             (None, 64)                50240     
+    dense_5 (Dense)              (None, 64)                50240     
     _________________________________________________________________
-    dense_11 (Dense)             (None, 32)                2080      
+    dense_6 (Dense)              (None, 32)                2080      
     _________________________________________________________________
-    dense_12 (Dense)             (None, 10)                330       
+    dense_7 (Dense)              (None, 10)                330       
     =================================================================
     Total params: 52,650
     Trainable params: 52,650
@@ -691,7 +698,7 @@ model_3.summary()
 
 ```python
 # __SOLUTION__ 
-model_3.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+model_3.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['acc'])
 ```
 
 
@@ -700,17 +707,16 @@ model_3.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accu
 results_3 = model_3.fit(X_train, y_train, epochs=5, batch_size=64, validation_data=(X_test, y_test))
 ```
 
-    Train on 60000 samples, validate on 10000 samples
     Epoch 1/5
-    60000/60000 [==============================] - 3s 53us/step - loss: 1.0062 - acc: 0.7204 - val_loss: 0.4557 - val_acc: 0.8801
+    938/938 [==============================] - 1s 786us/step - loss: 0.9933 - acc: 0.7328 - val_loss: 0.4465 - val_acc: 0.8798
     Epoch 2/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.3974 - acc: 0.8893 - val_loss: 0.3288 - val_acc: 0.9091
+    938/938 [==============================] - 1s 696us/step - loss: 0.3920 - acc: 0.8899 - val_loss: 0.3315 - val_acc: 0.9037
     Epoch 3/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.3251 - acc: 0.9077 - val_loss: 0.2889 - val_acc: 0.9194
+    938/938 [==============================] - 1s 694us/step - loss: 0.3208 - acc: 0.9090 - val_loss: 0.2889 - val_acc: 0.9173
     Epoch 4/5
-    60000/60000 [==============================] - ETA: 0s - loss: 0.2903 - acc: 0.916 - 3s 48us/step - loss: 0.2897 - acc: 0.9170 - val_loss: 0.2596 - val_acc: 0.9272
+    938/938 [==============================] - 1s 701us/step - loss: 0.2832 - acc: 0.9189 - val_loss: 0.2579 - val_acc: 0.9268
     Epoch 5/5
-    60000/60000 [==============================] - 3s 48us/step - loss: 0.2639 - acc: 0.9252 - val_loss: 0.2408 - val_acc: 0.9332
+    938/938 [==============================] - 1s 692us/step - loss: 0.2567 - acc: 0.9276 - val_loss: 0.2420 - val_acc: 0.9291
 
 
 
@@ -720,11 +726,15 @@ visualize_training_results(results_3)
 ```
 
 
+    
 ![png](index_files/index_78_0.png)
+    
 
 
 
+    
 ![png](index_files/index_78_1.png)
+    
 
 
 Performance improved even further! ReLU is one of the most commonly used activation functions around right now -- it's especially useful in computer vision problems like image classification, as we've just seen. 
