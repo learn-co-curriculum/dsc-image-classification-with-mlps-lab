@@ -22,6 +22,8 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True' #This prevents kernel shut down due to xgboost conflict
 ```
 
 ##  Data 
