@@ -22,6 +22,8 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True' #This prevents kernel shut down due to xgboost conflict
 ```
 
 ##  Data 
@@ -50,7 +52,7 @@ print('Label: {}'.format(sample_label))
 ```
 
 
-    <matplotlib.image.AxesImage at 0x16364e6d0>
+    <matplotlib.image.AxesImage at 0x165541700>
 
 
     Label: 5
@@ -338,15 +340,15 @@ results_1 = model_1.fit(X_train, y_train, epochs=5, batch_size=64, validation_da
 ```
 
     Epoch 1/5
-    938/938 [==============================] - 1s 773us/step - loss: 0.8794 - acc: 0.7851 - val_loss: 0.5103 - val_acc: 0.8736
+    938/938 [==============================] - 1s 748us/step - loss: 0.8686 - acc: 0.7895 - val_loss: 0.5026 - val_acc: 0.8781
     Epoch 2/5
-    938/938 [==============================] - 1s 663us/step - loss: 0.4605 - acc: 0.8795 - val_loss: 0.3950 - val_acc: 0.8938
+    938/938 [==============================] - 1s 654us/step - loss: 0.4556 - acc: 0.8813 - val_loss: 0.3902 - val_acc: 0.8989
     Epoch 3/5
-    938/938 [==============================] - 1s 665us/step - loss: 0.3858 - acc: 0.8943 - val_loss: 0.3482 - val_acc: 0.9058
+    938/938 [==============================] - 1s 635us/step - loss: 0.3826 - acc: 0.8960 - val_loss: 0.3457 - val_acc: 0.9077
     Epoch 4/5
-    938/938 [==============================] - 1s 661us/step - loss: 0.3491 - acc: 0.9030 - val_loss: 0.3217 - val_acc: 0.9106
+    938/938 [==============================] - 1s 633us/step - loss: 0.3461 - acc: 0.9045 - val_loss: 0.3209 - val_acc: 0.9124
     Epoch 5/5
-    938/938 [==============================] - 1s 676us/step - loss: 0.3256 - acc: 0.9090 - val_loss: 0.3045 - val_acc: 0.9160
+    938/938 [==============================] - 1s 652us/step - loss: 0.3222 - acc: 0.9102 - val_loss: 0.3004 - val_acc: 0.9168
 
 
 ## Visualizing our Loss and Accuracy Curves
@@ -454,15 +456,15 @@ results_2 = model_2.fit(X_train, y_train, batch_size=64, epochs=5, validation_da
 ```
 
     Epoch 1/5
-    938/938 [==============================] - 1s 778us/step - loss: 0.9475 - acc: 0.7646 - val_loss: 0.5321 - val_acc: 0.8793
+    938/938 [==============================] - 1s 744us/step - loss: 0.9308 - acc: 0.7661 - val_loss: 0.5353 - val_acc: 0.8739
     Epoch 2/5
-    938/938 [==============================] - 1s 688us/step - loss: 0.4588 - acc: 0.8855 - val_loss: 0.3847 - val_acc: 0.9028
+    938/938 [==============================] - 1s 667us/step - loss: 0.4642 - acc: 0.8814 - val_loss: 0.3868 - val_acc: 0.9014
     Epoch 3/5
-    938/938 [==============================] - 1s 706us/step - loss: 0.3663 - acc: 0.9018 - val_loss: 0.3285 - val_acc: 0.9117
+    938/938 [==============================] - 1s 679us/step - loss: 0.3702 - acc: 0.8998 - val_loss: 0.3304 - val_acc: 0.9108
     Epoch 4/5
-    938/938 [==============================] - 1s 677us/step - loss: 0.3223 - acc: 0.9111 - val_loss: 0.2981 - val_acc: 0.9194
+    938/938 [==============================] - 1s 656us/step - loss: 0.3250 - acc: 0.9102 - val_loss: 0.2975 - val_acc: 0.9179
     Epoch 5/5
-    938/938 [==============================] - 1s 700us/step - loss: 0.2944 - acc: 0.9182 - val_loss: 0.2750 - val_acc: 0.9241
+    938/938 [==============================] - 1s 662us/step - loss: 0.2959 - acc: 0.9171 - val_loss: 0.2733 - val_acc: 0.9231
 
 
 Now, visualize the plots again. 
@@ -530,15 +532,15 @@ results_3 = model_3.fit(X_train, y_train, epochs=5, batch_size=64, validation_da
 ```
 
     Epoch 1/5
-    938/938 [==============================] - 1s 786us/step - loss: 0.9933 - acc: 0.7328 - val_loss: 0.4465 - val_acc: 0.8798
+    938/938 [==============================] - 1s 830us/step - loss: 1.0675 - acc: 0.7148 - val_loss: 0.4527 - val_acc: 0.8828
     Epoch 2/5
-    938/938 [==============================] - 1s 696us/step - loss: 0.3920 - acc: 0.8899 - val_loss: 0.3315 - val_acc: 0.9037
+    938/938 [==============================] - 1s 656us/step - loss: 0.3950 - acc: 0.8907 - val_loss: 0.3314 - val_acc: 0.9088
     Epoch 3/5
-    938/938 [==============================] - 1s 694us/step - loss: 0.3208 - acc: 0.9090 - val_loss: 0.2889 - val_acc: 0.9173
+    938/938 [==============================] - 1s 656us/step - loss: 0.3193 - acc: 0.9088 - val_loss: 0.2859 - val_acc: 0.9187
     Epoch 4/5
-    938/938 [==============================] - 1s 701us/step - loss: 0.2832 - acc: 0.9189 - val_loss: 0.2579 - val_acc: 0.9268
+    938/938 [==============================] - 1s 656us/step - loss: 0.2825 - acc: 0.9190 - val_loss: 0.2611 - val_acc: 0.9264
     Epoch 5/5
-    938/938 [==============================] - 1s 692us/step - loss: 0.2567 - acc: 0.9276 - val_loss: 0.2420 - val_acc: 0.9291
+    938/938 [==============================] - 1s 658us/step - loss: 0.2568 - acc: 0.9266 - val_loss: 0.2384 - val_acc: 0.9338
 
 
 
