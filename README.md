@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 %matplotlib inline
-import keras
+import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
@@ -117,11 +117,11 @@ Let's take a quick look at the first 10 labels in our training data:
 
 As we can see, the labels for each digit image in the training set are stored as the corresponding integer value -- if the image is of a 5, then the corresponding label will be `5`. This means that this is a **_Multiclass Classification_** problem, which means that we need to **_One-Hot Encode_** our labels before we can use them for training. 
 
-Luckily, Keras provides a really easy utility function to handle this for us. 
+Luckily, TensorFlow provides a really easy utility function to handle this for us. 
 
 In the cell below: 
 
-* Use the function `to_categorical()` to one-hot encode our labels. This function can be found in the `keras.utils` sub-module. Pass in the following parameters:
+* Use the function `to_categorical()` to one-hot encode our labels. This function can be found in the `tf.keras.utils` sub-module. Pass in the following parameters:
     * The object we want to one-hot encode, which will be `y_train`/`y_test` 
     * The number of classes contained in the labels, `10` 
 
