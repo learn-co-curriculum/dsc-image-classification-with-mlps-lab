@@ -23,7 +23,8 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
 import os
-os.environ['KMP_DUPLICATE_LIB_OK']='True' #This prevents kernel shut down due to xgboost conflict
+os.environ['KMP_DUPLICATE_LIB_OK']='True' # This prevents kernel shut down due to xgboost conflict
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # This line prevents tf's comments about the optimizing your machine
 ```
 
 ##  Data 
